@@ -7,6 +7,7 @@ use sp_consensus_aura::sr25519::AuthorityId as AuraId;
 use sp_finality_grandpa::AuthorityId as GrandpaId;
 use sp_runtime::traits::{Verify, IdentifyAccount};
 use sc_service::ChainType;
+use serde_json::json;
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -69,9 +70,12 @@ pub fn development_config() -> Result<ChainSpec, String> {
 		// Telemetry
 		None,
 		// Protocol ID
-		None,
+		Some("panda-local"),
 		// Properties
-		None,
+		Some(json!({
+		  "tokenDecimals": 18,
+		  "tokenSymbol": "SPT"
+		}).as_object().expect("Error").clone()),
 		// Extensions
 		None,
 	))
@@ -117,9 +121,12 @@ pub fn local_testnet_config() -> Result<ChainSpec, String> {
 		// Telemetry
 		None,
 		// Protocol ID
-		None,
+		Some("panda-testnet"),
 		// Properties
-		None,
+		Some(json!({
+		  "tokenDecimals": 18,
+		  "tokenSymbol": "SPT"
+		}).as_object().expect("Error").clone()),
 		// Extensions
 		None,
 	))

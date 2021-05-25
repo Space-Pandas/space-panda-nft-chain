@@ -21,6 +21,7 @@ substrate-build-script-utils = '3.0.0'
 [dependencies]
 log = '0.4.14'
 jsonrpc-core = '15.1.0'
+serde_json = '1.0'
 structopt = '0.3.8'
 
 # local dependencies
