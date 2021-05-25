@@ -1,17 +1,17 @@
-version: "3.2"
+version: "1.0"
 
 services:
   dev:
-    container_name: node-template
+    container_name: panda
     image: paritytech/ci-linux:974ba3ac-20201006
-    working_dir: /var/www/node-template
+    working_dir: /var/www/panda
     ports:
       - "9944:9944"
     environment:
-      - CARGO_HOME=/var/www/node-template/.cargo
+      - CARGO_HOME=/var/www/panda/.cargo
     volumes:
-      - .:/var/www/node-template
+      - .:/var/www/panda
       - type: bind
         source: ./.local
         target: /root/.local
-    command: bash -c "cargo build --release && ./target/release/node-template --dev --ws-external"
+    command: bash -c "cargo build --release && ./target/release/panda --dev --ws-external"
