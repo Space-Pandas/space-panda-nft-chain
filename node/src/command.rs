@@ -20,10 +20,11 @@ use crate::cli::{Cli, Subcommand};
 use sc_cli::{SubstrateCli, RuntimeVersion, Role, ChainSpec};
 use sc_service::PartialComponents;
 use panda_runtime::Block;
+use log::info;
 
 impl SubstrateCli for Cli {
 	fn impl_name() -> String {
-		"Substrate Node".into()
+		"Panda Node".into()
 	}
 
 	fn impl_version() -> String {
@@ -39,7 +40,7 @@ impl SubstrateCli for Cli {
 	}
 
 	fn support_url() -> String {
-		"support.anonymous.an".into()
+		"https://github.com/Space-Pandas/space-panda-nft-chain/issues/new".into()
 	}
 
 	fn copyright_start_year() -> i32 {
@@ -126,6 +127,13 @@ pub fn run() -> sc_cli::Result<()> {
 			}
 		},
 		None => {
+			info!("  _____                _       ");
+			info!(" |  __ \\             | |      ");
+			info!(" | |__) |_ _ _ __   __| | __ _ ");
+			info!(" |  ___/ _` | '_ \\/ _` |/ _` |");
+			info!(" | |  | (_| | | | | (_| | (_| |");
+			info!(" |_|  \\__,_|_| |_|\\_,_|\\__,_|");
+
 			let runner = cli.create_runner(&cli.run)?;
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
