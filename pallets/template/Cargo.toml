@@ -1,12 +1,12 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
-description = 'FRAME pallet template for defining custom runtime logic.'
+authors = ['pandadadig <https://github.com/Space-Pandas>']
+description = 'FRAME pallet template for defining panda runtime logic.'
 edition = '2018'
-homepage = 'https://substrate.dev'
+homepage = 'https://pandas.land'
 license = 'Unlicense'
 name = 'pallet-template'
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
-version = '3.0.0'
+repository = 'https://github.com/Space-Pandas/space-panda-nft-chain'
+version = '1.0.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']

@@ -1,11 +1,11 @@
 [package]
-authors = ['Substrate DevHub <https://github.com/substrate-developer-hub>']
+authors = ['pandadadig <https://github.com/Space-Pandas>']
 edition = '2018'
-homepage = 'https://substrate.dev'
+homepage = 'https://pandas.land'
 license = 'Unlicense'
-name = 'node-template-runtime'
-repository = 'https://github.com/substrate-developer-hub/substrate-node-template/'
-version = '3.0.0'
+name = 'panda-runtime'
+repository = 'https://github.com/Space-Pandas/space-panda-nft-chain'
+version = '1.0.0'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -25,7 +25,7 @@ hex-literal = { optional = true, version = '0.3.1' }
 serde = { features = ['derive'], optional = true, version = '1.0.119' }
 
 # local dependencies
-pallet-template = { path = '../pallets/template', default-features = false, version = '3.0.0' }
+pallet-template = { path = '../pallets/template', default-features = false, version = '1.0.0' }
 
 # Substrate dependencies
 frame-benchmarking = { default-features = false, optional = true, version = '3.0.0' }

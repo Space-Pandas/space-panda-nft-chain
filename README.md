@@ -1,10 +1,10 @@
-# Substrate Node Template
+# Panda NFT chain
 
-A fresh FRAME-based [Substrate](https://www.substrate.io/) node, ready for hacking :rocket:
+A substrate based NFT chain, support cross-chain NFT and Defi
 
 ## Getting Started
 
-Follow these steps to get started with the Node Template :hammer_and_wrench:
+Follow these steps to get started with the Panda NFT chain:
 
 ### Rust Setup
 
@@ -33,7 +33,7 @@ Once the project has been built, the following command can be used to explore al
 subcommands:
 
 ```sh
-./target/release/node-template -h
+./target/release/panda -h
 ```
 
 ## Run
@@ -47,19 +47,19 @@ node.
 This command will start the single-node development chain with persistent state:
 
 ```bash
-./target/release/node-template --dev
+./target/release/panda --dev
 ```
 
 Purge the development chain's state:
 
 ```bash
-./target/release/node-template purge-chain --dev
+./target/release/panda purge-chain --dev
 ```
 
 Start the development chain with detailed logging:
 
 ```bash
-RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/node-template -lruntime=debug --dev
+RUST_LOG=debug RUST_BACKTRACE=1 ./target/release/panda -lruntime=debug --dev
 ```
 
 ### Multi-Node Local Testnet
@@ -110,7 +110,7 @@ After the node has been [built](#build), refer to the embedded documentation to 
 capabilities and configuration parameters that it exposes:
 
 ```shell
-./target/release/node-template --help
+./target/release/panda --help
 ```
 
 ### Runtime
@@ -170,15 +170,15 @@ Then run the following command to start a single node development chain.
 ```
 
 This command will firstly compile your code, and then start a local development network. You can
-also replace the default command (`cargo build --release && ./target/release/node-template --dev --ws-external`)
+also replace the default command (`cargo build --release && ./target/release/panda --dev --ws-external`)
 by appending your own. A few useful ones are as follow.
 
 ```bash
 # Run Substrate node without re-compiling
-./scripts/docker_run.sh ./target/release/node-template --dev --ws-external
+./scripts/docker_run.sh ./target/release/panda --dev --ws-external
 
 # Purge the local dev chain
-./scripts/docker_run.sh ./target/release/node-template purge-chain --dev
+./scripts/docker_run.sh ./target/release/panda purge-chain --dev
 
 # Check whether the code is compilable
 ./scripts/docker_run.sh cargo check
