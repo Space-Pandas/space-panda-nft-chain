@@ -1,0 +1,16 @@
+[package]
+name = "panda-primitives"
+version = "1.0.0"
+authors = ["pandadadig <pandadadig@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+sp-core = { default-features = false, version = '3.0.0'  }
+sp-runtime = { default-features = false, version = '3.0.0'  }
+
+[features]
+default = ["std"]
+std = [
+    "sp-core/std",
+    "sp-runtime/std",
+]
