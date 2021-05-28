@@ -159,7 +159,6 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	const ENDOWMENT: Balance = 1_000 * DOLLARS;
 	const STASH: Balance = 100 * DOLLARS;
-	const AUTHOR_BALANCE: Balance = 200 * DOLLARS;
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -171,7 +170,6 @@ fn testnet_genesis(
 			// Configure endowed accounts with initial balance of 1 << 60.
 			balances: endowed_accounts.iter().cloned()
 				.map(|k| (k, ENDOWMENT))
-				.chain(initial_authorities.iter().map(|x| (x.0.clone(), AUTHOR_BALANCE)))
 				.collect(),
 		}),
 		pallet_babe: Some(BabeConfig {
