@@ -1,0 +1,36 @@
+[package]
+name = 'nft-accounts'
+authors = ['pandadadig <https://github.com/Space-Pandas>']
+edition = '2018'
+license = 'GPL-3.0'
+homepage = 'https://pandas.land'
+repository = 'https://github.com/Space-Pandas/space-panda-nft-chain'
+version = '1.0.0'
+
+[dependencies]
+codec = { default-features = false, package = 'parity-scale-codec', version = '2.0.0' }
+frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+fp-evm = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'fp-evm-v2.0.0' }
+impl-trait-for-tuples = '0.2.1'
+libsecp256k1 = { default-features = false, version = '0.3.5', features = ['hmac'] }
+pallet-evm = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-evm-v3.0.0' }
+sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+sp-std = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'fp-evm/std',
+	'frame-support/std',
+	'frame-system/std',
+	'libsecp256k1/std',
+	'pallet-evm/std',
+	'sp-core/std',
+	'sp-runtime/std',
+	'sp-io/std',
+	'sp-std/std',
+]

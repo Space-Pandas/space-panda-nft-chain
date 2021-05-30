@@ -1,8 +1,9 @@
 [package]
 name = "panda-primitives"
 version = "1.0.0"
-authors = ["pandadadig <pandadadig@gmail.com>"]
+authors = ['pandadadig <https://github.com/Space-Pandas>']
 edition = "2018"
+license = 'GPL-3.0'
 
 [dependencies]
 sp-core = { default-features = false, version = '3.0.0'  }
