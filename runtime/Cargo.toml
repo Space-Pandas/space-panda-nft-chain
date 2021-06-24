@@ -67,11 +67,11 @@ sp-version = { default-features = false, version = '3.0.0' }
 substrate-frame-rpc-system = { default-features = false, version = '3.0.0' }
 
 # Frontier dependencies
-fp-rpc = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'fp-rpc-v2.0.0' }
-pallet-dynamic-fee = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-dynamic-fee-v1.0.0' }
-pallet-ethereum = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-ethereum-v1.0.0' }
-pallet-evm = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-evm-v3.0.0' }
-pallet-evm-precompile-simple = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-evm-precompile-simple-v1.0.0' }
+fp-rpc = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
+pallet-dynamic-fee = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
+pallet-ethereum = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
+pallet-evm = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
+pallet-evm-precompile-simple = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
 
 [features]
 default = ['std']

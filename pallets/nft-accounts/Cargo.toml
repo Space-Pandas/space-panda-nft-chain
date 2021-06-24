@@ -11,10 +11,10 @@ version = '1.0.0'
 codec = { default-features = false, package = 'parity-scale-codec', version = '2.0.0' }
 frame-support = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 frame-system = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
-fp-evm = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'fp-evm-v2.0.0' }
+fp-evm = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
 impl-trait-for-tuples = '0.2.1'
 libsecp256k1 = { default-features = false, version = '0.3.5', features = ['hmac'] }
-pallet-evm = { default-features = false, git = 'https://github.com/paritytech/frontier.git', tag = 'pallet-evm-v3.0.0' }
+pallet-evm = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
 sp-core = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-runtime = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-io = { default-features = false, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
