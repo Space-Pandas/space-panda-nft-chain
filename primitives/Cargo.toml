@@ -1,17 +1,17 @@
 [package]
-name = "panda-primitives"
-version = "1.0.0"
+name = 'panda-primitives'
+version = '1.0.0'
 authors = ['pandadadig <https://github.com/Space-Pandas>']
-edition = "2018"
+edition = '2018'
 license = 'GPL-3.0'
 
 [dependencies]
-sp-core = { default-features = false, version = '3.0.0'  }
-sp-runtime = { default-features = false, version = '3.0.0'  }
+sp-core = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0', default-features = false }
+sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0', default-features = false }
 
 [features]
-default = ["std"]
+default = ['std']
 std = [
-    "sp-core/std",
-    "sp-runtime/std",
+    'sp-core/std',
+    'sp-runtime/std',
 ]

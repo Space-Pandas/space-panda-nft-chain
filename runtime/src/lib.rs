@@ -356,37 +356,6 @@ pub const fn deposit(items: u32, bytes: u32) -> Balance {
 	items as Balance * 15 * CENTS + (bytes as Balance) * 6 * CENTS
 }
 
-parameter_types! {
-  pub const CandidacyBond: Balance = 1 * DOLLARS;
-  // 1 storage item created, key size is 32 bytes, value size is 16+16.
-  pub const VotingBondBase: Balance = deposit(1, 64);
-  // additional data per vote is 32 bytes (account id).
-  pub const VotingBondFactor: Balance = deposit(0, 32);
-  /// Daily council elections.
-  pub const TermDuration: BlockNumber = 3 * DAYS;
-  pub const DesiredMembers: u32 = 7;
-  pub const DesiredRunnersUp: u32 = 30;
-  pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
-}
-
-impl pallet_elections_phragmen::Config for Runtime {
-	type Event = Event;
-	type Currency = Balances;
-	type ChangeMembers = Council;
-	type InitializeMembers = Council;
-	type CurrencyToVote = U128CurrencyToVote;
-	type CandidacyBond = CandidacyBond;
-	type VotingBondBase = VotingBondBase;
-	type VotingBondFactor = VotingBondFactor;
-	type LoserCandidate = Treasury;
-	type KickedMember = Treasury;
-	type DesiredMembers = DesiredMembers;
-	type DesiredRunnersUp = DesiredRunnersUp;
-	type TermDuration = TermDuration;
-	type ModuleId = ElectionsPhragmenModuleId;
-	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
-}
-
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
 impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F>
 {
@@ -716,7 +685,6 @@ construct_runtime!(
     	// Governance feature
     	Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
-		ElectionsPhragmen: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
 		TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Event<T>, Config},
