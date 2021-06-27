@@ -1,8 +1,8 @@
-use sp_core::{Pair, Public, sr25519};
+use sp_core::{Pair, Public, sr25519, U256, H160};
 use panda_runtime::{
 	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, AuthorityDiscoveryConfig,
 	StakingConfig, SudoConfig, SystemConfig, WASM_BINARY, Signature, SessionKeys, ImOnlineId,
-	SessionConfig, StakerStatus, DOLLARS, Balance
+	SessionConfig, StakerStatus, DOLLARS, Balance, EVMConfig, EthereumConfig
 };
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_consensus_babe::AuthorityId as BabeId;
@@ -12,6 +12,7 @@ use sp_runtime::{
 };
 use sc_service::ChainType;
 use serde_json::json;
+use std::{str::FromStr, collections::BTreeMap};
 
 // The URL for the telemetry server.
 // const STAGING_TELEMETRY_URL: &str = "wss://telemetry.polkadot.io/submit/";
@@ -212,5 +213,24 @@ fn testnet_genesis(
 		pallet_elections_phragmen: Some(Default::default()),
 		pallet_treasury: Some(Default::default()),
 		pallet_membership_Instance1: Some(Default::default()),
+		pallet_evm: Some(EVMConfig {
+			accounts: {
+				let mut map = BTreeMap::new();
+				map.insert(
+					H160::from_str("6be02d1d3665660d22ff9624b7be0551ee1ac91b")
+						.expect("internal H160 is valid; qed"),
+					pallet_evm::GenesisAccount {
+						balance: U256::from_str("0xffffffffffffffffffffffffffffffff")
+							.expect("internal U256 is valid; qed"),
+						code: Default::default(),
+						nonce: Default::default(),
+						storage: Default::default(),
+					}
+				);
+				map
+			},
+		}),
+		pallet_ethereum: Some(EthereumConfig {}),
+		pallet_dynamic_fee: Some(Default::default()),
 	}
 }

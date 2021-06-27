@@ -22,12 +22,14 @@ substrate-build-script-utils = { git = 'https://github.com/paritytech/substrate'
 log = '0.4.14'
 jsonrpc-core = '15.1.0'
 serde_json = '1.0'
-structopt = '0.3.8'
+structopt = { version = '0.3.8', optional = true }
 
 # local dependencies
 panda-runtime = { path = '../runtime', version = '1.0.0' }
 
 # Substrate dependencies
+frame-benchmarking-cli = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+pallet-evm = { default-features = false, git = 'https://github.com/Space-Pandas/frontier.git', branch = 'spacepanda' }
 pallet-transaction-payment-rpc = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sc-basic-authorship = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0'  }
 sc-cli = { features = ['wasmtime'], optional = true, git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
@@ -36,7 +38,8 @@ sc-consensus = { git = 'https://github.com/paritytech/substrate.git',  tag = 'v3
 sc-consensus-babe = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sc-executor = { features = ['wasmtime'], git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sc-finality-grandpa = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
-sp-keystore = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+sc-finality-grandpa-warp-sync = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0', optional = true }
+sc-keystore = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sc-rpc = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0'  }
 sc-rpc-api = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sc-service = { features = ['wasmtime'], git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
@@ -50,9 +53,26 @@ sp-consensus-babe = { git = 'https://github.com/paritytech/substrate.git', tag =
 sp-core = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-finality-grandpa = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-inherents = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
+sp-keystore = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-runtime = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 sp-transaction-pool = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 substrate-frame-rpc-system = { git = 'https://github.com/paritytech/substrate.git', tag = 'v3.0.0' }
 
 [features]
-default = []
+default = [ 'cli' ]
+
+cli = [
+    'wasmi-errno',
+    'sc-cli',
+    'sc-finality-grandpa-warp-sync',
+    'sc-service/db',
+    'structopt',
+]
+
+wasmtime = [
+    'sc-executor/wasmtime',
+]
+
+wasmi-errno = [
+    'sc-executor/wasmi-errno',
+]

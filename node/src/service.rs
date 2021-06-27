@@ -15,7 +15,6 @@ native_executor_instance!(
 	pub Executor,
 	panda_runtime::api::dispatch,
 	panda_runtime::native_version,
-	frame_benchmarking::benchmarking::HostFunctions,
 );
 
 type FullClient = sc_service::TFullClient<Block, RuntimeApi, Executor>;

@@ -7,14 +7,14 @@
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 use nft_accounts::NftAddressMapping;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
-	crypto::KeyTypeId, OpaqueMetadata, H160,
+	crypto::KeyTypeId, OpaqueMetadata, H160, U256, crypto::Public,
 	u32_trait::{_1, _2, _3, _4, _5}
 };
 use sp_runtime::{
-	ModuleId, Perbill, Percent, Permill,
+	DispatchResult, ModuleId, Perbill, Percent, Permill,
 	ApplyExtrinsicResult, generic, create_runtime_str, impl_opaque_keys,
 	transaction_validity::{TransactionPriority, TransactionValidity, TransactionSource},
 	traits::{OpaqueKeys},
@@ -36,15 +36,20 @@ use sp_version::NativeVersion;
 pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, FeeCalculator, Runner};
+use pallet_evm::EnsureAddressTruncated;
+use nft_accounts::MergeAccount;
 
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
-	traits::{LockIdentifier, KeyOwnerProofSystem, Randomness, U128CurrencyToVote, FindAuthor},
+	traits::{
+		LockIdentifier, KeyOwnerProofSystem, Randomness,
+		U128CurrencyToVote, FindAuthor, ReservableCurrency
+	},
 	weights::{
 		Weight, IdentityFee, DispatchClass,
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight, WEIGHT_PER_SECOND},
 	},
+	ConsensusEngineId, transactional
 };
 use frame_system::{EnsureRoot, EnsureOneOf};
 use pallet_session::historical as pallet_session_historical;
@@ -176,7 +181,7 @@ impl frame_system::Config for Runtime {
 	type OnNewAccount = ();
 	/// What to do if an account is fully reaped from the system.
 	type OnKilledAccount = (
-		pallet_evm::CallKillAccount<Runtime>,
+		// pallet_evm::CallKillAccount<Runtime>,
 		nft_accounts::CallKillAccount<Runtime>,
 	);
 	/// The data to be stored in an account.
@@ -348,8 +353,38 @@ frame_support::parameter_types! {
 }
 
 impl pallet_dynamic_fee::Config for Runtime {
-	type Event = Event;
 	type MinGasPriceBoundDivisor = BoundDivision;
+}
+
+parameter_types! {
+  pub const CandidacyBond: Balance = 1 * DOLLARS;
+  // 1 storage item created, key size is 32 bytes, value size is 16+16.
+  pub const VotingBondBase: Balance = deposit(1, 64);
+  // additional data per vote is 32 bytes (account id).
+  pub const VotingBondFactor: Balance = deposit(0, 32);
+  /// Daily council elections.
+  pub const TermDuration: BlockNumber = 3 * DAYS;
+  pub const DesiredMembers: u32 = 7;
+  pub const DesiredRunnersUp: u32 = 30;
+  pub const ElectionsPhragmenModuleId: LockIdentifier = *b"phrelect";
+}
+
+impl pallet_elections_phragmen::Config for Runtime {
+	type Event = Event;
+	type Currency = Balances;
+	type ChangeMembers = Council;
+	type InitializeMembers = Council;
+	type CurrencyToVote = U128CurrencyToVote;
+	type CandidacyBond = CandidacyBond;
+	type VotingBondBase = VotingBondBase;
+	type VotingBondFactor = VotingBondFactor;
+	type LoserCandidate = Treasury;
+	type KickedMember = Treasury;
+	type DesiredMembers = DesiredMembers;
+	type DesiredRunnersUp = DesiredRunnersUp;
+	type TermDuration = TermDuration;
+	type ModuleId = ElectionsPhragmenModuleId;
+	type WeightInfo = pallet_elections_phragmen::weights::SubstrateWeight<Runtime>;
 }
 
 pub const fn deposit(items: u32, bytes: u32) -> Balance {
@@ -357,14 +392,14 @@ pub const fn deposit(items: u32, bytes: u32) -> Balance {
 }
 
 pub struct EthereumFindAuthor<F>(PhantomData<F>);
-impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F>
-{
-	fn find_author<'a, I>(digests: I) -> Option<H160> where
-		I: 'a + IntoIterator<Item=(ConsensusEngineId, &'a [u8])>
+impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
+	fn find_author<'a, I>(digests: I) -> Option<H160>
+		where
+			I: 'a + IntoIterator<Item = (ConsensusEngineId, &'a [u8])>,
 	{
 		if let Some(author_index) = F::find_author(digests) {
-			let authority_id = Aura::authorities()[author_index as usize].clone();
-			return Some(H160::from_slice(&authority_id.to_raw_vec()[4..24]));
+			let authority_id = Babe::authorities()[author_index as usize].clone();
+			return Some(H160::from_slice(&authority_id.0.to_raw_vec()[4..24]));
 		}
 		None
 	}
@@ -372,7 +407,7 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F>
 
 impl pallet_ethereum::Config for Runtime {
 	type Event = Event;
-	type FindAuthor = EthereumFindAuthor<Aura>;
+	type FindAuthor = EthereumFindAuthor<Babe>;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot;
 }
 
@@ -384,9 +419,10 @@ parameter_types! {
 impl pallet_evm::Config for Runtime {
 	type FeeCalculator = pallet_dynamic_fee::Module<Self>;
 	type GasWeightMapping = ();
+	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping;
 	type CallOrigin = EnsureAddressTruncated;
 	type WithdrawOrigin = EnsureAddressTruncated;
-	type AddressMapping = NftAddressMapping<BlakeTwo256>;
+	type AddressMapping = NftAddressMapping<Runtime>;
 	type Currency = Balances;
 	type Event = Event;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
@@ -395,10 +431,6 @@ impl pallet_evm::Config for Runtime {
 		pallet_evm_precompile_simple::Sha256,
 		pallet_evm_precompile_simple::Ripemd160,
 		pallet_evm_precompile_simple::Identity,
-		pallet_evm_precompile_modexp::Modexp,
-		pallet_evm_precompile_simple::ECRecoverPublicKey,
-		pallet_evm_precompile_sha3fips::Sha3FIPS256,
-		pallet_evm_precompile_sha3fips::Sha3FIPS512,
 	);
 	type ChainId = ChainId;
 	type BlockGasLimit = BlockGasLimit;
@@ -450,13 +482,28 @@ impl pallet_membership::Config<pallet_membership::Instance1> for Runtime {
 	type MembershipChanged = TechnicalCommittee;
 }
 
+pub struct MergeNftAccount;
+impl MergeAccount<AccountId> for MergeNftAccount {
+	#[transactional]
+	fn merge_account(source: &AccountId, dest: &AccountId) -> DispatchResult {
+		// unreserve all reserved currency
+		<Balances as ReservableCurrency<_>>::unreserve(source, Balances::reserved_balance(source));
+
+		// transfer all free to dest
+		match Balances::transfer(Some(source.clone()).into(), dest.clone().into(), Balances::free_balance(source)) {
+			Ok(_) => Ok(()),
+			Err(e) => Err(e.error),
+		}
+	}
+}
+
 impl nft_accounts::Config for Runtime {
 	type Event = Event;
 	type Currency = Balances;
 	type KillAccount = frame_system::Consumer<Runtime>;
 	type AddressMapping = NftAddressMapping<Runtime>;
-	type MergeAccount = MergeAccountEvm;
-	type WeightInfo = weights::evm_accounts::WeightInfo<Runtime>;
+	type MergeAccount = MergeNftAccount;
+	type WeightInfo = nft_accounts::weights::WeightInfo<Runtime>;
 }
 
 parameter_types! {
@@ -685,6 +732,7 @@ construct_runtime!(
     	// Governance feature
     	Council: pallet_collective::<Instance1>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		Democracy: pallet_democracy::{Module, Call, Storage, Config, Event<T>},
+		ElectionsPhragmen: pallet_elections_phragmen::{Module, Call, Storage, Event<T>, Config<T>},
 		TechnicalCommittee: pallet_collective::<Instance2>::{Module, Call, Storage, Origin<T>, Event<T>, Config<T>},
 		TechnicalMembership: pallet_membership::<Instance1>::{Module, Call, Storage, Event<T>, Config<T>},
 		Treasury: pallet_treasury::{Module, Call, Storage, Event<T>, Config},
@@ -693,7 +741,7 @@ construct_runtime!(
     	NftAccounts: nft_accounts::{Module, Call, Storage, Event<T>},
 		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
     	Ethereum: pallet_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
-    	DynamicFee: pallet_dynamic_fee::{Module, Call, Storage, Config, Event, Inherent},
+    	DynamicFee: pallet_dynamic_fee::{Module, Call, Storage, Config, Inherent},
 
 		// Tools
 		AuthorityDiscovery: pallet_authority_discovery::{Module, Call, Config},

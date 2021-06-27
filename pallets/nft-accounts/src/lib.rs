@@ -24,7 +24,7 @@ use sp_runtime::{DispatchResult, DispatchError};
 use sp_std::marker::PhantomData;
 use sp_std::vec::Vec;
 
-mod default_weight;
+pub mod weights;
 
 pub trait WeightInfo {
 	fn claim_account() -> Weight;
