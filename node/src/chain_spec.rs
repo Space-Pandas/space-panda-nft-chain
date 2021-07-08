@@ -1,6 +1,6 @@
 use sp_core::{Pair, Public, sr25519, U256, H160};
 use panda_runtime::{
-	AccountId, BabeConfig, BalancesConfig, GenesisConfig, GrandpaConfig, AuthorityDiscoveryConfig,
+	AccountId, BabeConfig, BalancesConfig, ContractsConfig, GenesisConfig, GrandpaConfig, AuthorityDiscoveryConfig,
 	StakingConfig, SudoConfig, SystemConfig, WASM_BINARY, Signature, SessionKeys, ImOnlineId,
 	SessionConfig, StakerStatus, DOLLARS, Balance, EVMConfig, EthereumConfig
 };
@@ -160,6 +160,7 @@ fn testnet_genesis(
 ) -> GenesisConfig {
 	const ENDOWMENT: Balance = 1_000 * DOLLARS;
 	const STASH: Balance = 100 * DOLLARS;
+	let enable_println = true;
 
 	GenesisConfig {
 		frame_system: Some(SystemConfig {
@@ -175,6 +176,12 @@ fn testnet_genesis(
 		}),
 		pallet_babe: Some(BabeConfig {
 			authorities: vec![],
+		}),
+		pallet_contracts: Some(ContractsConfig {
+			current_schedule: pallet_contracts::Schedule {
+				enable_println, // this should only be enabled on development chains
+				..Default::default()
+			},
 		}),
 		pallet_grandpa: Some(GrandpaConfig {
 			authorities: vec![],

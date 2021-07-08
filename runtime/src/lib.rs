@@ -6,11 +6,12 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
-use nft_accounts::NftAddressMapping;
+use codec::{Encode, Decode};
+use fp_rpc::TransactionStatus;
 use sp_std::{marker::PhantomData, prelude::*};
 use sp_authority_discovery::AuthorityId as AuthorityDiscoveryId;
 use sp_core::{
-	crypto::KeyTypeId, OpaqueMetadata, H160, U256, crypto::Public,
+	crypto::KeyTypeId, OpaqueMetadata, H160, U256, H256, crypto::Public,
 	u32_trait::{_1, _2, _3, _4, _5}
 };
 use sp_runtime::{
@@ -36,8 +37,8 @@ use sp_version::NativeVersion;
 pub use sp_runtime::BuildStorage;
 pub use pallet_timestamp::Call as TimestampCall;
 pub use pallet_balances::Call as BalancesCall;
-use pallet_evm::EnsureAddressTruncated;
-use nft_accounts::MergeAccount;
+use pallet_evm::{Account as EVMAccount, EnsureAddressTruncated, Runner};
+use nft_accounts::{MergeAccount, NftAddressMapping};
 
 pub use frame_support::{
 	construct_runtime, parameter_types, StorageValue,
@@ -120,6 +121,22 @@ pub fn native_version() -> NativeVersion {
 	NativeVersion {
 		runtime_version: VERSION,
 		can_author_with: Default::default(),
+	}
+}
+
+pub struct TransactionConverter;
+
+impl fp_rpc::ConvertTransaction<UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> UncheckedExtrinsic {
+		UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into())
+	}
+}
+
+impl fp_rpc::ConvertTransaction<opaque::UncheckedExtrinsic> for TransactionConverter {
+	fn convert_transaction(&self, transaction: pallet_ethereum::Transaction) -> opaque::UncheckedExtrinsic {
+		let extrinsic = UncheckedExtrinsic::new_unsigned(pallet_ethereum::Call::<Runtime>::transact(transaction).into());
+		let encoded = extrinsic.encode();
+		opaque::UncheckedExtrinsic::decode(&mut &encoded[..]).expect("Encoded extrinsic is always valid")
 	}
 }
 
@@ -280,6 +297,45 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
+  pub const TombstoneDeposit: Balance = 16 * MILLICENTS;
+  pub const SurchargeReward: Balance = 150 * MILLICENTS;
+  pub const SignedClaimHandicap: u32 = 2;
+  pub const MaxDepth: u32 = 32;
+  pub const MaxValueSize: u32 = 16 * 1024;
+  pub const RentByteFee: Balance = 4 * MILLICENTS;
+  pub const RentDepositOffset: Balance = 1000 * MILLICENTS;
+  pub const DepositPerContract: Balance = TombstoneDeposit::get();
+  pub const DepositPerStorageByte: Balance = deposit(0, 1);
+  pub const DepositPerStorageItem: Balance = deposit(1, 0);
+  pub RentFraction: Perbill = Perbill::from_rational_approximation(1u32, 30 * DAYS);
+  // The lazy deletion runs inside on_initialize.
+  pub DeletionWeightLimit: Weight = AVERAGE_ON_INITIALIZE_RATIO *
+    BlockWeights::get().max_block;
+}
+
+impl pallet_contracts::Config for Runtime {
+	type Time = Timestamp;
+	type Randomness = RandomnessCollectiveFlip;
+	type Currency = Balances;
+	type Event = Event;
+	type RentPayment = ();
+	type SignedClaimHandicap = SignedClaimHandicap;
+	type TombstoneDeposit = TombstoneDeposit;
+	type DepositPerContract = DepositPerContract;
+	type DepositPerStorageByte = DepositPerStorageByte;
+	type DepositPerStorageItem = DepositPerStorageItem;
+	type RentFraction = RentFraction;
+	type SurchargeReward = SurchargeReward;
+	type MaxDepth = MaxDepth;
+	type MaxValueSize = MaxValueSize;
+	type WeightPrice = pallet_transaction_payment::Module<Self>;
+	type WeightInfo = pallet_contracts::weights::SubstrateWeight<Self>;
+	type ChainExtension = ();
+	type DeletionQueueDepth = ();
+	type DeletionWeightLimit = DeletionWeightLimit;
 }
 
 parameter_types! {
@@ -738,6 +794,7 @@ construct_runtime!(
 		Treasury: pallet_treasury::{Module, Call, Storage, Event<T>, Config},
 
 		// NFT feature
+		Contracts: pallet_contracts::{Module, Call, Config<T>, Storage, Event<T>},
     	NftAccounts: nft_accounts::{Module, Call, Storage, Event<T>},
 		EVM: pallet_evm::{Module, Config, Call, Storage, Event<T>},
     	Ethereum: pallet_ethereum::{Module, Call, Storage, Event, Config, ValidateUnsigned},
@@ -945,8 +1002,143 @@ impl_runtime_apis! {
 		}
 	}
 
-	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		for Runtime {
+	impl fp_rpc::EthereumRuntimeRPCApi<Block> for Runtime {
+		fn chain_id() -> u64 {
+			<Runtime as pallet_evm::Config>::ChainId::get()
+		}
+
+		fn account_basic(address: H160) -> EVMAccount {
+			EVM::account_basic(&address)
+		}
+
+		fn gas_price() -> U256 {
+			<Runtime as pallet_evm::Config>::FeeCalculator::min_gas_price()
+		}
+
+		fn account_code_at(address: H160) -> Vec<u8> {
+			EVM::account_codes(address)
+		}
+
+		fn author() -> H160 {
+			<pallet_ethereum::Module<Runtime>>::find_author()
+		}
+
+		fn storage_at(address: H160, index: U256) -> H256 {
+			let mut tmp = [0u8; 32];
+			index.to_big_endian(&mut tmp);
+			EVM::account_storages(address, H256::from_slice(&tmp[..]))
+		}
+
+		fn call(
+			from: H160,
+			to: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CallInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::call(
+				from,
+				to,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn create(
+			from: H160,
+			data: Vec<u8>,
+			value: U256,
+			gas_limit: U256,
+			gas_price: Option<U256>,
+			nonce: Option<U256>,
+			estimate: bool,
+		) -> Result<pallet_evm::CreateInfo, sp_runtime::DispatchError> {
+			let config = if estimate {
+				let mut config = <Runtime as pallet_evm::Config>::config().clone();
+				config.estimate = true;
+				Some(config)
+			} else {
+				None
+			};
+
+			<Runtime as pallet_evm::Config>::Runner::create(
+				from,
+				data,
+				value,
+				gas_limit.low_u64(),
+				gas_price,
+				nonce,
+				config.as_ref().unwrap_or(<Runtime as pallet_evm::Config>::config()),
+			).map_err(|err| err.into())
+		}
+
+		fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
+			Ethereum::current_transaction_statuses()
+		}
+
+		fn current_block() -> Option<pallet_ethereum::Block> {
+			Ethereum::current_block()
+		}
+
+		fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
+			Ethereum::current_receipts()
+		}
+
+		fn current_all() -> (
+			Option<pallet_ethereum::Block>,
+			Option<Vec<pallet_ethereum::Receipt>>,
+			Option<Vec<TransactionStatus>>
+		) {
+			(
+				Ethereum::current_block(),
+				Ethereum::current_receipts(),
+				Ethereum::current_transaction_statuses()
+			)
+		}
+	}
+
+  	impl pallet_contracts_rpc_runtime_api::ContractsApi<Block, AccountId, Balance, BlockNumber> for Runtime
+	{
+		fn call(
+		  origin: AccountId,
+		  dest: AccountId,
+		  value: Balance,
+		  gas_limit: u64,
+		  input_data: Vec<u8>,
+		) -> pallet_contracts_primitives::ContractExecResult {
+			Contracts::bare_call(origin, dest.into(), value, gas_limit, input_data)
+		}
+
+		fn get_storage(
+		  address: AccountId,
+		  key: [u8; 32],
+		) -> pallet_contracts_primitives::GetStorageResult {
+		  Contracts::get_storage(address, key)
+		}
+
+		fn rent_projection(
+		  address: AccountId,
+		) -> pallet_contracts_primitives::RentProjectionResult<BlockNumber> {
+		  Contracts::rent_projection(address)
+		}
+	}
+
+	impl pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance> for Runtime {
 		fn query_info(
 			uxt: <Block as BlockT>::Extrinsic,
 			len: u32,

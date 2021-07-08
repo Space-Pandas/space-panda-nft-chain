@@ -63,6 +63,7 @@ impl SubstrateCli for Cli {
 }
 
 /// Parse and run command line arguments
+#[allow(dead_code)]
 pub fn run() -> sc_cli::Result<()> {
 	let cli = Cli::from_args();
 
@@ -76,7 +77,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, ..}
-					= service::new_partial(&config)?;
+					= service::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		},
@@ -84,7 +85,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, ..}
-					= service::new_partial(&config)?;
+					= service::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, config.database), task_manager))
 			})
 		},
@@ -92,7 +93,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, ..}
-					= service::new_partial(&config)?;
+					= service::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, config.chain_spec), task_manager))
 			})
 		},
@@ -100,7 +101,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, import_queue, ..}
-					= service::new_partial(&config)?;
+					= service::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, import_queue), task_manager))
 			})
 		},
@@ -112,7 +113,7 @@ pub fn run() -> sc_cli::Result<()> {
 			let runner = cli.create_runner(cmd)?;
 			runner.async_run(|config| {
 				let PartialComponents { client, task_manager, backend, ..}
-					= service::new_partial(&config)?;
+					= service::new_partial(&config, &cli)?;
 				Ok((cmd.run(client, backend), task_manager))
 			})
 		},
@@ -134,11 +135,11 @@ pub fn run() -> sc_cli::Result<()> {
 			info!(" | |  | (_| | | | | (_| | (_| |");
 			info!(" |_|  \\__,_|_| |_|\\_,_|\\__,_|");
 
-			let runner = cli.create_runner(&cli.run)?;
+			let runner = cli.create_runner(&cli.run.base)?;
 			runner.run_node_until_exit(|config| async move {
 				match config.role {
 					Role::Light => service::new_light(config),
-					_ => service::new_full(config),
+					_ => service::new_full(config, &cli),
 				}.map_err(sc_cli::Error::Service)
 			})
 		}

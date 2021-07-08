@@ -2,7 +2,7 @@
 
 use sp_runtime::{
     generic,
-    traits::{IdentifyAccount, Verify},
+    traits::{BlakeTwo256, IdentifyAccount, Verify},
     MultiSignature
 };
 
@@ -20,8 +20,17 @@ pub type AccountIndex = u32;
 /// Balance of an account.
 pub type Balance = u128;
 
+/// Header type.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+
+/// Block type.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
+
 /// An index to a block.
 pub type BlockNumber = u32;
+
+/// Block ID.
+pub type BlockId = generic::BlockId<Block>;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem<Hash>;
@@ -34,6 +43,9 @@ pub type Index = u32;
 
 /// An instant or duration in time.
 pub type Moment = u64;
+
+/// Opaque, encoded, unchecked extrinsic.
+pub use sp_runtime::OpaqueExtrinsic as UncheckedExtrinsic;
 
 pub mod currency {
     use super::*;
